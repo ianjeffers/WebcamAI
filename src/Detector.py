@@ -1,10 +1,10 @@
-import logging
 import os
 
 import cv2
 import requests
 
 from imageai.Detection import ObjectDetection
+from LoggingManager import LoggingManager
 
 class Detector():
     model_yolo_v3 = 'https://github.com/OlafenwaMoses/ImageAI/releases/download/1.0/yolo.h5'
@@ -17,21 +17,18 @@ class Detector():
     def __init__(self, using_model=tiny_yolo_path):
         self.using_model = using_model
         self.get_model()
+        self.log = LoggingManager()
 
     def get_model(self):
-        logging.info("Setting up Model")
         if not os.path.exists(self.tiny_yolo_path):
-            logging.info("Downloading Model")
             r = requests.get(self.model_tiny_yolo_v3, timeout=0.5)
             with open(self.tiny_yolo_path, 'wb') as outfile:
                 outfile.write(r.content)
-            logging.info("Model Downloaded")
 
         self.detector = ObjectDetection()
         self.detector.setModelTypeAsTinyYOLOv3()
         self.detector.setModelPath(self.tiny_yolo_path)
         self.detector.loadModel(self.tiny_yolo_path)
-        logging.info("Model loaded")
 
     def get_prediction(self, image):
         detectedImage, detections = self.detector.detectObjectsFromImage(output_type="array",
@@ -43,8 +40,8 @@ class Detector():
 
         objects = ""
         for eachObject in detections:
-            objects += eachObject["name"] + " / " \
-                       + str(eachObject["percentage_probability"]) + " / " + str(eachObject["box_points"])
-        objects += "\n"
-        logging.log(5, objects)
+            objects += eachObject["name"] + " : " +\
+                       str(eachObject["percentage_probability"]) + " : " + str(eachObject["box_points"]) + "\n"
+        objects += "---"*5
+        self.log.log_records(objects)
         return convertedImage
